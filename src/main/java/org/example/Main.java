@@ -1,12 +1,12 @@
 package org.example;
 
-import org.example.repository.ProductDaoImpl;
+import org.example.repository.impl.ProductRepositoryImpl;
 
 public class Main {
 
     public static void main(String[] args) {
-        var userDao = new ProductDaoImpl();
-        userDao.findAllProducts().forEach(System.out::println);
+        var userDao = new ProductRepositoryImpl();
+        userDao.findAll().forEach(System.out::println);
     }
 
 }

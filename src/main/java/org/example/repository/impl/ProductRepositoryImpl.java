@@ -1,16 +1,18 @@
-package org.example.repository;
+package org.example.repository.impl;
 
 import org.example.configuration.ConnectionDataSource;
 import org.example.entities.Product;
+import org.example.repository.ProductRepository;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Optional;
 
-public class ProductDaoImpl implements ProductDao {
+public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
-    public List<Product> findAllProducts() {
+    public Collection<Product> findAll() {
         var products = new ArrayList<Product>();
         try (var connection = ConnectionDataSource.getConnection();
              var stmt = connection.createStatement();
@@ -20,14 +22,23 @@ public class ProductDaoImpl implements ProductDao {
                 var product = new Product(resultSet.getLong("id"),
                         resultSet.getString("nombre"),
                         resultSet.getDouble("precio"),
-                        resultSet.getDate("fecha_registro"));
+                        resultSet.getDate("fecha_registro").toLocalDate());
                 products.add(product);
             }
-
-            return products;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return products;
+    }
+
+    @Override
+    public Optional<Product> findById(Long id) {
+        return Optional.empty();
+    }
+
+    @Override
+    public void save(Product product) {
+
     }
 
 }

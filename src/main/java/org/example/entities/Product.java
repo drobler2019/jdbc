@@ -1,5 +1,5 @@
 package org.example.entities;
 
-import java.sql.Date;
+import java.time.LocalDate;
 
-public record Product(Long id, String nombre, Double precio, Date fechaRegistro) {}
+public record Product(Long id, String nombre, Double precio, LocalDate fechaRegistro) {}
