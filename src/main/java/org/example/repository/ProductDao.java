@@ -1,7 +1,11 @@
 package org.example.repository;
 
+import org.example.entities.Product;
+
+import java.util.List;
+
 public interface ProductDao {
 
-    void obtenerProductos();
+    List<Product> findAllProducts();
 
 }
