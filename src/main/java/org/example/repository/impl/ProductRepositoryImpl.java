@@ -5,6 +5,7 @@ import org.example.entities.Product;
 import org.example.repository.ProductRepository;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,12 +22,8 @@ public class ProductRepositoryImpl implements ProductRepository {
         var products = new ArrayList<Product>();
         try (var stmt = this.getConnection().createStatement();
              var resultSet = stmt.executeQuery("SELECT * FROM productos")) {
-
             while (resultSet.next()) {
-                var product = new Product(resultSet.getLong("id"),
-                        resultSet.getString("nombre"),
-                        resultSet.getDouble("precio"),
-                        resultSet.getDate("fecha_registro").toLocalDate());
+                var product = this.getProduct(resultSet);
                 products.add(product);
             }
         } catch (SQLException e) {
@@ -39,20 +36,13 @@ public class ProductRepositoryImpl implements ProductRepository {
     public Optional<Product> findById(Long id) {
         Product product = null;
         try (var stmt = this.getConnection().prepareStatement("SELECT * FROM productos WHERE id = ?")) {
-
             stmt.setLong(1, id);
-
             try (var resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
-                    product = new Product(resultSet.getLong("id"),
-                            resultSet.getString("nombre"),
-                            resultSet.getDouble("precio"),
-                            resultSet.getDate("fecha_registro").toLocalDate());
+                    product = this.getProduct(resultSet);
                 }
-
                 return Optional.ofNullable(product);
             }
-
         } catch (SQLException e) {
             final var message = String.format("code: %s - detail: %s", e.getSQLState(), e.getMessage());
             System.err.println(message);
@@ -68,6 +58,13 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public void deleteById(Long id) {
 
+    }
+
+    private Product getProduct(ResultSet resultSet) throws SQLException {
+        return new Product(resultSet.getLong("id"),
+                resultSet.getString("nombre"),
+                resultSet.getDouble("precio"),
+                resultSet.getDate("fecha_registro").toLocalDate());
     }
 
 }
