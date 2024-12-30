@@ -1,6 +1,6 @@
 package org.example.repository.impl;
 
-import org.example.configuration.ConnectionDataSource;
+import org.example.configuration.PoolDataSource;
 import org.example.entities.User;
 import org.example.repository.UserRepository;
 
@@ -13,16 +13,10 @@ import java.util.Optional;
 
 public class UserRepositoryImpl implements UserRepository {
 
-    private final Connection connection;
-
-    public UserRepositoryImpl() throws SQLException {
-        this.connection = ConnectionDataSource.getSingleton();
-    }
-
     @Override
     public Collection<User> findAll() {
         var users = new ArrayList<User>();
-        try (var statement = this.connection.createStatement();
+        try (var connection = this.getConnection(); var statement = connection.createStatement();
              var resultSet = statement.executeQuery("SELECT * FROM usuarios")) {
             while (resultSet.next()) {
                 var user = getUser(resultSet);
@@ -37,7 +31,8 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public Optional<User> findById(Long id) {
         User user = null;
-        try (var preparedStatement = this.connection.prepareStatement("SELECT * FROM usuarios WHERE id = ?")) {
+        try (var connection = this.getConnection();
+             var preparedStatement = connection.prepareStatement("SELECT * FROM usuarios WHERE id = ?")) {
             preparedStatement.setLong(1, id);
             try (var resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
@@ -56,7 +51,7 @@ public class UserRepositoryImpl implements UserRepository {
         if (this.hasId(user)) {
             sql = "UPDATE usuarios SET username =? ,password =?, email =? WHERE id =?";
         }
-        try (var preparedStatement = this.connection.prepareStatement(sql)) {
+        try (var connection = this.getConnection(); var preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, user.username());
             preparedStatement.setString(2, user.password());
             preparedStatement.setString(3, user.email());
@@ -72,13 +67,18 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public void deleteById(Long id) {
-        try (var preparedStatement = this.connection.prepareStatement("DELETE FROM usuarios WHERE id = ?")) {
+        try (var connection = this.getConnection();
+             var preparedStatement = connection.prepareStatement("DELETE FROM usuarios WHERE id = ?")) {
             preparedStatement.setLong(1, id);
             preparedStatement.executeUpdate();
             System.out.println("usuario eliminado con éxito!");
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    private Connection getConnection() throws SQLException {
+        return PoolDataSource.getConnection();
     }
 
     private User getUser(ResultSet resultSet) throws SQLException {

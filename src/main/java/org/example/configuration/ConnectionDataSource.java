@@ -4,11 +4,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class ConnectionDataSource {
+import static org.example.constant.UtilDataSource.*;
 
-    private static final String URL = "jdbc:mysql://localhost:3306/jdbc?serverTimeZone=UTC";
-    private static final String USER = "root";
-    private static final String PASSWORD = "12345";
+public class ConnectionDataSource {
 
     private static Connection connection;
 
