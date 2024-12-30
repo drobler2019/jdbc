@@ -22,16 +22,14 @@ public class Main {
 
         try (var connection = ConnectionDataSource.getSingleton()) {
             do {
-                option = Integer.parseInt(JOptionPane.showInputDialog("elija una opción: \n1. Listar usuarios \n 2. Búscar usuario \n3. Registrar usuario \n4. Eliminar un usuario \n5. salir"));
+                option = Integer.parseInt(JOptionPane.showInputDialog("elija una opción: \n1. Listar usuarios \n 2. Búscar usuario \n3. Registrar usuario \n4.Actualizar usuario \n5. Eliminar un usuario \n6. salir"));
                 if (userRepository.findAll().isEmpty() && option != 3 && option != 5) {
                     JOptionPane.showConfirmDialog(null, "no hay usuarios", "Aceptar", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
                     continue;
                 }
                 switch (option) {
                     case 1 -> {
-                        var users = userRepository.findAll().stream()
-                                .map(user -> "id: " + user.id() + " " + "username: " + user.username() + " " + "email: " + user.email())
-                                .collect(Collectors.joining("\n"));
+                        var users = getUsers(userRepository);
                         message(users, "Lista de usuarios");
                     }
                     case 2 -> {
@@ -47,16 +45,33 @@ public class Main {
                         userRepository.save(user);
                     }
                     case 4 -> {
+                        var users = getUsers(userRepository);
+                        var id = Long.parseLong(JOptionPane.showInputDialog(users + "\ndigite id de usuario a actualizar"));
+                        var user = userRepository.findById(id).orElseThrow();
+                        message(user.toString(), "Información Usuario a actualizar");
+                        var username = JOptionPane.showInputDialog("nuevo username:");
+                        var password = JOptionPane.showInputDialog("nueva password:");
+                        var email = JOptionPane.showInputDialog("nuevo email:");
+                        var newUser = new User(user.id(), username, password, email);
+                        userRepository.save(newUser);
+                    }
+                    case 5 -> {
                         var id = Long.parseLong(JOptionPane.showInputDialog("digite id del usuario: "));
                         var optionalUser = userRepository.findById(id);
                         optionalUser.ifPresentOrElse(user -> userRepository.deleteById(user.id()),
                                 () -> message("usuario no encontrado", "Eliminar usuario"));
                     }
                 }
-            } while (option != 5);
+            } while (option != 6);
         }
 
 
+    }
+
+    private static String getUsers(UserRepositoryImpl userRepository) {
+        return userRepository.findAll().stream()
+                .map(user -> "id: " + user.id() + " " + "username: " + user.username() + " " + "email: " + user.email())
+                .collect(Collectors.joining("\n"));
     }
 
     private static void message(String message, String title) {

@@ -52,10 +52,17 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public void save(User user) {
-        try (var preparedStatement = this.connection.prepareStatement("INSERT INTO usuarios (username,password,email) VALUES (?,?,?)")) {
+        var sql = "INSERT INTO usuarios (username,password,email) VALUES (?,?,?)";
+        if (this.hasId(user)) {
+            sql = "UPDATE usuarios SET username =? ,password =?, email =? WHERE id =?";
+        }
+        try (var preparedStatement = this.connection.prepareStatement(sql)) {
             preparedStatement.setString(1, user.username());
             preparedStatement.setString(2, user.password());
             preparedStatement.setString(3, user.email());
+            if (this.hasId(user)) {
+                preparedStatement.setLong(4, user.id());
+            }
             preparedStatement.executeUpdate();
             System.out.println("usuario registrado con éxito!");
         } catch (SQLException e) {
@@ -77,5 +84,9 @@ public class UserRepositoryImpl implements UserRepository {
     private User getUser(ResultSet resultSet) throws SQLException {
         return new User(resultSet.getLong("id"), resultSet.getString("username"),
                 resultSet.getString("password"), resultSet.getString("email"));
+    }
+
+    private boolean hasId(User user) {
+        return user.id() != null && user.id() != 0;
     }
 }
