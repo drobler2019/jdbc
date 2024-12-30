@@ -1,6 +1,7 @@
 package org.example;
 
 import org.example.configuration.ConnectionDataSource;
+import org.example.entities.Category;
 import org.example.entities.Product;
 import org.example.repository.ProductRepository;
 import org.example.repository.impl.ProductRepositoryImpl;
@@ -26,14 +27,16 @@ public class Main {
     }
 
     public static void saveProduct(ProductRepository productRepository) {
-        var newProduct = new Product(null, "Secadora", 3000.0, LocalDate.now());
+        var category = new Category(3L, null);
+        var newProduct = new Product(null, "Secadora", 3000.0, category, LocalDate.now());
         productRepository.save(newProduct);
     }
 
     public static void updateProduct(ProductRepository productRepository) {
+        var category = new Category(4L, null);
         var optionalProduct = productRepository.findById(11L);
         optionalProduct.ifPresentOrElse(product -> {
-            var newProduct = new Product(product.id(), "Juego de niñas", 3000.0, null);
+            var newProduct = new Product(product.id(), "Uvas", 3000.0,category, null);
             productRepository.save(newProduct);
         }, () -> System.out.println("usuario no encontrado"));
     }
