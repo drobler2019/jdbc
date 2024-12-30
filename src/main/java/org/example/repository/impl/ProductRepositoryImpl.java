@@ -4,6 +4,7 @@ import org.example.configuration.ConnectionDataSource;
 import org.example.entities.Product;
 import org.example.repository.ProductRepository;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,11 +12,14 @@ import java.util.Optional;
 
 public class ProductRepositoryImpl implements ProductRepository {
 
+    public Connection getConnection() throws SQLException {
+        return ConnectionDataSource.getConnection();
+    }
+
     @Override
     public Collection<Product> findAll() {
         var products = new ArrayList<Product>();
-        try (var connection = ConnectionDataSource.getConnection();
-             var stmt = connection.createStatement();
+        try (var stmt = this.getConnection().createStatement();
              var resultSet = stmt.executeQuery("SELECT * FROM productos")) {
 
             while (resultSet.next()) {
@@ -33,11 +37,36 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public Optional<Product> findById(Long id) {
-        return Optional.empty();
+        Product product = null;
+        try (var stmt = this.getConnection().prepareStatement("SELECT * FROM productos WHERE id = ?")) {
+
+            stmt.setLong(1, id);
+
+            try (var resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    product = new Product(resultSet.getLong("id"),
+                            resultSet.getString("nombre"),
+                            resultSet.getDouble("precio"),
+                            resultSet.getDate("fecha_registro").toLocalDate());
+                }
+
+                return Optional.ofNullable(product);
+            }
+
+        } catch (SQLException e) {
+            final var message = String.format("code: %s - detail: %s", e.getSQLState(), e.getMessage());
+            System.err.println(message);
+            return Optional.empty();
+        }
     }
 
     @Override
     public void save(Product product) {
+
+    }
+
+    @Override
+    public void deleteById(Long id) {
 
     }
 
