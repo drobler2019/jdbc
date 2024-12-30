@@ -22,7 +22,8 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public Collection<Product> findAll() {
         var products = new ArrayList<Product>();
-        try (var stmt = this.getConnection().createStatement();
+        try (var connection = this.getConnection();
+             var stmt = connection.createStatement();
              var resultSet = stmt.executeQuery("SELECT prod.*,cat.nombre FROM productos as prod INNER JOIN categorias as cat ON (prod.categoria_id = cat.id)")) {
             while (resultSet.next()) {
                 var product = this.getProduct(resultSet);
@@ -37,7 +38,8 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public Optional<Product> findById(Long id) {
         Product product = null;
-        try (var stmt = this.getConnection().prepareStatement("SELECT prod.*,cat.nombre FROM productos as prod INNER JOIN categorias as cat ON (prod.categoria_id = cat.id) WHERE prod.id = ?")) {
+        try (var connection = this.getConnection();
+             var stmt = connection.prepareStatement("SELECT prod.*,cat.nombre FROM productos as prod INNER JOIN categorias as cat ON (prod.categoria_id = cat.id) WHERE prod.id = ?")) {
             stmt.setLong(1, id);
             try (var resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
@@ -59,7 +61,8 @@ public class ProductRepositoryImpl implements ProductRepository {
         } else {
             sql = "INSERT INTO productos(nombre,precio,categoria_id,fecha_registro) VALUES (?,?,?,?)";
         }
-        try (var stmt = this.getConnection().prepareStatement(sql)) {
+        try (var connection = this.getConnection();
+             var stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, product.nombre());
             stmt.setDouble(2, product.precio());
             stmt.setLong(3, product.category().id());
@@ -79,7 +82,8 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public void deleteById(Long id) {
-        try (var stmt = this.getConnection().prepareStatement("DELETE FROM productos WHERE id=?")) {
+        try (var connection = this.getConnection();
+             var stmt = connection.prepareStatement("DELETE FROM productos WHERE id=?")) {
             stmt.setLong(1, id);
             stmt.executeUpdate();
             this.success("producto " + id + " eliminado con éxito");

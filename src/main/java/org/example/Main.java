@@ -1,6 +1,5 @@
 package org.example;
 
-import org.example.configuration.ConnectionDataSource;
 import org.example.entities.Category;
 import org.example.entities.Product;
 import org.example.repository.ProductRepository;
@@ -13,8 +12,8 @@ public class Main {
 
     public static void main(String[] args) throws SQLException {
         var productRepository = new ProductRepositoryImpl();
-        updateProduct(productRepository);
-        ConnectionDataSource.closeConnection();
+        listProducts(productRepository);
+        findProduct(productRepository);
     }
 
     public static void listProducts(ProductRepository productRepository) {
@@ -22,7 +21,7 @@ public class Main {
     }
 
     public static void findProduct(ProductRepository productRepository) {
-        var optionalProduct = productRepository.findById(32L);
+        var optionalProduct = productRepository.findById(2L);
         optionalProduct.ifPresentOrElse(System.out::println, () -> System.out.println("usuario no encontrado"));
     }
 

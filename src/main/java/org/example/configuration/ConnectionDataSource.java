@@ -15,11 +15,15 @@ public class ConnectionDataSource {
     private ConnectionDataSource() {
     }
 
-    public static Connection getConnection() throws SQLException {
+    public static Connection getSingleton() throws SQLException {
         if (connection == null) {
             connection = DriverManager.getConnection(URL, USER, PASSWORD);
         }
         return connection;
+    }
+
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL,USER,PASSWORD);
     }
 
     public static void closeConnection() throws SQLException {
