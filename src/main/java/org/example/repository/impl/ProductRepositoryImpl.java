@@ -1,6 +1,6 @@
 package org.example.repository.impl;
 
-import org.example.configuration.ConnectionDataSource;
+import org.example.configuration.SingletonDataSource;
 import org.example.entities.Category;
 import org.example.entities.Product;
 import org.example.repository.ProductRepository;
@@ -16,7 +16,7 @@ import java.util.Optional;
 public class ProductRepositoryImpl implements ProductRepository {
 
     public Connection getConnection() throws SQLException {
-        return ConnectionDataSource.getConnection();
+        return SingletonDataSource.getConnection();
     }
 
     @Override

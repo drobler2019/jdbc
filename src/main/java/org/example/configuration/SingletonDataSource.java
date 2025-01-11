@@ -6,11 +6,11 @@ import java.sql.SQLException;
 
 import static org.example.constant.UtilDataSource.*;
 
-public class ConnectionDataSource {
+public class SingletonDataSource {
 
     private static Connection connection;
 
-    private ConnectionDataSource() {
+    private SingletonDataSource() {
     }
 
     public static Connection getSingleton() throws SQLException {

@@ -1,6 +1,5 @@
 package org.example;
 
-import org.example.configuration.ConnectionDataSource;
 import org.example.entities.Category;
 import org.example.entities.Product;
 import org.example.entities.User;
