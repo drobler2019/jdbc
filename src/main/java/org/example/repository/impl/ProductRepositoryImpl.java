@@ -57,19 +57,20 @@ public class ProductRepositoryImpl implements ProductRepository {
     public void save(Product product) {
         String sql;
         if (this.hasId(product.id())) {
-            sql = "UPDATE productos SET nombre=?, precio=?,categoria_id=? WHERE id=?";
+            sql = "UPDATE productos SET nombre=?, precio=?,categoria_id=?, sku=? WHERE id=?";
         } else {
-            sql = "INSERT INTO productos(nombre,precio,categoria_id,fecha_registro) VALUES (?,?,?,?)";
+            sql = "INSERT INTO productos(nombre,precio,categoria_id,sku,fecha_registro) VALUES (?,?,?,?,?)";
         }
         try (var connection = this.getConnection();
              var stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, product.nombre());
             stmt.setDouble(2, product.precio());
             stmt.setLong(3, product.category().id());
+            stmt.setString(4, product.sku());
             if (this.hasId(product.id())) {
-                stmt.setLong(4, product.id());
+                stmt.setLong(5, product.id());
             } else {
-                stmt.setDate(4, Date.valueOf(product.fechaRegistro()));
+                stmt.setDate(5, Date.valueOf(product.fechaRegistro()));
             }
             stmt.executeUpdate();
             final var message = sql.contains("UPDATE") ? String.format("producto %s %s con éxito!", product.id(), "actualizado")
@@ -77,6 +78,7 @@ public class ProductRepositoryImpl implements ProductRepository {
             this.success(message);
         } catch (SQLException e) {
             this.logError(e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -102,7 +104,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                 resultSet.getString("nombre"),
                 resultSet.getDouble("precio"),
                 category,
-                resultSet.getDate("fecha_registro").toLocalDate());
+                resultSet.getDate("fecha_registro").toLocalDate(), resultSet.getString("sku"));
     }
 
     private void success(String message) {

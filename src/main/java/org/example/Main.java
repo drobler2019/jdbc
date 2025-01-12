@@ -1,9 +1,11 @@
 package org.example;
 
+import org.example.configuration.SingletonDataSource;
 import org.example.entities.Category;
 import org.example.entities.Product;
 import org.example.entities.User;
 import org.example.repository.ProductRepository;
+import org.example.repository.impl.ProductRepositoryImpl;
 import org.example.repository.impl.UserRepositoryImpl;
 
 import javax.swing.*;
@@ -13,7 +15,32 @@ import java.util.stream.Collectors;
 
 public class Main {
 
-    public static void main(String[] args) throws SQLException {
+    public static void main(String[] args) {
+        transactionExample();
+    }
+
+    private static void transactionExample() {
+        try (var connection = SingletonDataSource.getSingleton()) {
+            connection.setAutoCommit(false);
+            try {
+
+                var productRepository = new ProductRepositoryImpl();
+                //transacción
+                saveProduct(productRepository);
+                updateProduct(productRepository);
+                connection.commit();
+
+            } catch (RuntimeException e) {
+                System.out.println(e.getMessage());
+                connection.rollback();
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private static void crudUser() {
         final var userRepository = new UserRepositoryImpl();
         var option = 0;
         do {
@@ -81,15 +108,15 @@ public class Main {
 
     public static void saveProduct(ProductRepository productRepository) {
         var category = new Category(3L, null);
-        var newProduct = new Product(null, "Secadora", 3000.0, category, LocalDate.now());
+        var newProduct = new Product(null, "ASUS probook two 2025", 3000.0, category, LocalDate.now(), "abcde12345");
         productRepository.save(newProduct);
     }
 
     public static void updateProduct(ProductRepository productRepository) {
         var category = new Category(4L, null);
-        var optionalProduct = productRepository.findById(11L);
+        var optionalProduct = productRepository.findById(1L);
         optionalProduct.ifPresentOrElse(product -> {
-            var newProduct = new Product(product.id(), "Uvas", 3000.0, category, null);
+            var newProduct = new Product(product.id(), "MotherBoard", 30000.0, category, null, "12345abcd");
             productRepository.save(newProduct);
         }, () -> System.out.println("usuario no encontrado"));
     }
