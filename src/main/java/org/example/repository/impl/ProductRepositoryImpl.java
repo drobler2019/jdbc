@@ -1,29 +1,28 @@
 package org.example.repository.impl;
 
 import org.example.configuration.SingletonDataSource;
+import org.example.constant.UtilDataSource;
 import org.example.entities.Category;
 import org.example.entities.Product;
 import org.example.repository.ProductRepository;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
 public class ProductRepositoryImpl implements ProductRepository {
 
-    public Connection getConnection() throws SQLException {
-        return SingletonDataSource.getConnection();
+    private Connection connection;
+
+    public ProductRepositoryImpl(Connection connection) {
+        this.connection = connection;
     }
 
     @Override
     public Collection<Product> findAll() {
         var products = new ArrayList<Product>();
-        try (var connection = this.getConnection();
-             var stmt = connection.createStatement();
+        try (var stmt = this.connection.createStatement();
              var resultSet = stmt.executeQuery("SELECT prod.*,cat.nombre FROM productos as prod INNER JOIN categorias as cat ON (prod.categoria_id = cat.id)")) {
             while (resultSet.next()) {
                 var product = this.getProduct(resultSet);
@@ -38,8 +37,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public Optional<Product> findById(Long id) {
         Product product = null;
-        try (var connection = this.getConnection();
-             var stmt = connection.prepareStatement("SELECT prod.*,cat.nombre FROM productos as prod INNER JOIN categorias as cat ON (prod.categoria_id = cat.id) WHERE prod.id = ?")) {
+        try (var stmt = this.connection.prepareStatement("SELECT prod.*,cat.nombre FROM productos as prod INNER JOIN categorias as cat ON (prod.categoria_id = cat.id) WHERE prod.id = ?")) {
             stmt.setLong(1, id);
             try (var resultSet = stmt.executeQuery()) {
                 while (resultSet.next()) {
@@ -54,20 +52,19 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public void save(Product product) {
+    public Product save(Product product) {
         String sql;
-        if (this.hasId(product.id())) {
+        if (UtilDataSource.hasId(product.id())) {
             sql = "UPDATE productos SET nombre=?, precio=?,categoria_id=?, sku=? WHERE id=?";
         } else {
             sql = "INSERT INTO productos(nombre,precio,categoria_id,sku,fecha_registro) VALUES (?,?,?,?,?)";
         }
-        try (var connection = this.getConnection();
-             var stmt = connection.prepareStatement(sql)) {
+        try (var stmt = this.connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, product.nombre());
             stmt.setDouble(2, product.precio());
             stmt.setLong(3, product.category().id());
             stmt.setString(4, product.sku());
-            if (this.hasId(product.id())) {
+            if (UtilDataSource.hasId(product.id())) {
                 stmt.setLong(5, product.id());
             } else {
                 stmt.setDate(5, Date.valueOf(product.fechaRegistro()));
@@ -75,7 +72,17 @@ public class ProductRepositoryImpl implements ProductRepository {
             stmt.executeUpdate();
             final var message = sql.contains("UPDATE") ? String.format("producto %s %s con éxito!", product.id(), "actualizado")
                     : "producto guardado con éxito!";
+
+            var id = 0L;
+
+            if (product.id() == null) {
+                try (var resultSet = stmt.getGeneratedKeys()) {
+                    id = resultSet.getLong(1);
+                }
+            }
+
             this.success(message);
+            return new Product(id, product.nombre(), product.precio(), product.category(), product.fechaRegistro(), product.sku());
         } catch (SQLException e) {
             this.logError(e);
             throw new RuntimeException(e.getMessage());
@@ -84,18 +91,13 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public void deleteById(Long id) {
-        try (var connection = this.getConnection();
-             var stmt = connection.prepareStatement("DELETE FROM productos WHERE id=?")) {
+        try (var stmt = this.connection.prepareStatement("DELETE FROM productos WHERE id=?")) {
             stmt.setLong(1, id);
             stmt.executeUpdate();
             this.success("producto " + id + " eliminado con éxito");
         } catch (SQLException e) {
             this.logError(e);
         }
-    }
-
-    private boolean hasId(Long id) {
-        return id != null && id > 0;
     }
 
     private Product getProduct(ResultSet resultSet) throws SQLException {

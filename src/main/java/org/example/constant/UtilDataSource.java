@@ -10,4 +10,8 @@ public class UtilDataSource {
     public static final int MIN_CONNECTION_INACTIVE = 3;
     public static final int MAX_CONNECTION_TOTAL = 8;
 
+    public static boolean hasId(Long id) {
+        return id != null && id > 0;
+    }
+
 }

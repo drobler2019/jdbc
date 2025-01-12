@@ -1,12 +1,14 @@
 package org.example.repository.impl;
 
 import org.example.configuration.PoolDataSource;
+import org.example.constant.UtilDataSource;
 import org.example.entities.User;
 import org.example.repository.UserRepository;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
@@ -46,20 +48,30 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public void save(User user) {
+    public User save(User user) {
         var sql = "INSERT INTO usuarios (username,password,email) VALUES (?,?,?)";
-        if (this.hasId(user)) {
+        if (UtilDataSource.hasId(user.id())) {
             sql = "UPDATE usuarios SET username =? ,password =?, email =? WHERE id =?";
         }
-        try (var connection = this.getConnection(); var preparedStatement = connection.prepareStatement(sql)) {
+        try (var connection = this.getConnection(); var preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setString(1, user.username());
             preparedStatement.setString(2, user.password());
             preparedStatement.setString(3, user.email());
-            if (this.hasId(user)) {
+            if (UtilDataSource.hasId(user.id())) {
                 preparedStatement.setLong(4, user.id());
             }
             preparedStatement.executeUpdate();
             System.out.println("usuario registrado con éxito!");
+
+            var id = 0L;
+
+            if (user.id() == null) {
+                try (var resultSet = preparedStatement.getGeneratedKeys()) {
+                    id = resultSet.getLong(1);
+                }
+            }
+
+            return new User(id, user.username(), user.password(), user.email());
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -86,7 +98,4 @@ public class UserRepositoryImpl implements UserRepository {
                 resultSet.getString("password"), resultSet.getString("email"));
     }
 
-    private boolean hasId(User user) {
-        return user.id() != null && user.id() != 0;
-    }
 }

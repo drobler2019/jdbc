@@ -1,10 +1,13 @@
 package org.example;
 
+import org.example.configuration.PoolDataSource;
 import org.example.configuration.SingletonDataSource;
 import org.example.entities.Category;
 import org.example.entities.Product;
 import org.example.entities.User;
+import org.example.repository.CategoryRepository;
 import org.example.repository.ProductRepository;
+import org.example.repository.impl.CategoryRepositoryImpl;
 import org.example.repository.impl.ProductRepositoryImpl;
 import org.example.repository.impl.UserRepositoryImpl;
 
@@ -20,19 +23,20 @@ public class Main {
     }
 
     private static void transactionExample() {
-        try (var connection = SingletonDataSource.getSingleton()) {
+        try (var connection = PoolDataSource.getConnection()) {
             connection.setAutoCommit(false);
             try {
 
-                var productRepository = new ProductRepositoryImpl();
+                var categoryRepository = new CategoryRepositoryImpl(connection);
+                var productRepository = new ProductRepositoryImpl(connection);
                 //transacción
-                saveProduct(productRepository);
+                saveProduct(productRepository, categoryRepository);
                 updateProduct(productRepository);
                 connection.commit();
 
             } catch (RuntimeException e) {
-                System.out.println(e.getMessage());
                 connection.rollback();
+                System.out.println(e.getMessage());
             }
 
         } catch (SQLException e) {
@@ -106,9 +110,10 @@ public class Main {
         optionalProduct.ifPresentOrElse(System.out::println, () -> System.out.println("usuario no encontrado"));
     }
 
-    public static void saveProduct(ProductRepository productRepository) {
-        var category = new Category(3L, null);
-        var newProduct = new Product(null, "ASUS probook two 2025", 3000.0, category, LocalDate.now(), "abcde12345");
+    public static void saveProduct(ProductRepository productRepository, CategoryRepository categoryRepository) {
+        var category = new Category(null, "TECHNOLOGY");
+        var categorySave = categoryRepository.save(category);
+        var newProduct = new Product(null, "Lenovo nitro 5", 3000.0, categorySave, LocalDate.now(), "abcde12345");
         productRepository.save(newProduct);
     }
 

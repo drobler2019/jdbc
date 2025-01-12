@@ -7,7 +7,7 @@ public interface Repository<T,ID> {
 
     Collection<T> findAll();
     Optional<T> findById(ID id);
-    void save(T t);
+    T save(T t);
     void deleteById(ID id);
 
 }
