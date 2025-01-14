@@ -1,7 +1,6 @@
 package org.example;
 
 import org.example.configuration.PoolDataSource;
-import org.example.configuration.SingletonDataSource;
 import org.example.entities.Category;
 import org.example.entities.Product;
 import org.example.entities.User;
@@ -10,6 +9,7 @@ import org.example.repository.ProductRepository;
 import org.example.repository.impl.CategoryRepositoryImpl;
 import org.example.repository.impl.ProductRepositoryImpl;
 import org.example.repository.impl.UserRepositoryImpl;
+import org.example.service.ServiceImpl;
 
 import javax.swing.*;
 import java.sql.SQLException;
@@ -18,8 +18,13 @@ import java.util.stream.Collectors;
 
 public class Main {
 
-    public static void main(String[] args) {
-        transactionExample();
+    public static void main(String[] args) throws SQLException {
+        transactionWithService();
+    }
+
+    private static void transactionWithService() throws SQLException {
+        var service = new ServiceImpl();
+        service.deleteCategory(15L);
     }
 
     private static void transactionExample() {
@@ -121,7 +126,7 @@ public class Main {
         var category = new Category(4L, null);
         var optionalProduct = productRepository.findById(1L);
         optionalProduct.ifPresentOrElse(product -> {
-            var newProduct = new Product(product.id(), "MotherBoard", 30000.0, category, null, "12345abcd");
+            var newProduct = new Product(product.getId(), "MotherBoard", 30000.0, category, null, "12345abcd");
             productRepository.save(newProduct);
         }, () -> System.out.println("usuario no encontrado"));
     }

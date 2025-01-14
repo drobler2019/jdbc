@@ -16,6 +16,8 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     private Connection connection;
 
+    public CategoryRepositoryImpl() {}
+
     public CategoryRepositoryImpl(Connection connection) {
         this.connection = connection;
     }
@@ -73,9 +75,8 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
             if (category.id() == null) {
                 try (var rs = statement.getGeneratedKeys()) {
-                    if (rs.next()) {
+                    if (rs.next())
                         id = rs.getLong(1);
-                    }
                 }
             }
 
@@ -98,5 +99,10 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     private Category getCategory(ResultSet resultSet) throws SQLException {
         return new Category(resultSet.getLong(1), resultSet.getString(2));
+    }
+
+    @Override
+    public void setConnection(Connection connection) {
+        this.connection = connection;
     }
 }
